@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { supabase, isSupabaseConfigured } from '../supabaseClient'
+import { formatTanggal } from '../utils/formatDate'
 
 const BULAN_LIST = [
   { v: 1, l: 'Januari' }, { v: 2, l: 'Februari' }, { v: 3, l: 'Maret' }, { v: 4, l: 'April' },
@@ -65,7 +66,7 @@ export default function AdminLaporan() {
 
   function exportCSV() {
     const header = ['No', 'Instansi', 'Kabupaten', 'Materi', 'Tanggal Diajukan', 'Status']
-    const csvRows = filtered.map((r) => [r.nomor_urut, r.instansi, r.kabupaten, r.materi, r.created_at, r.status])
+    const csvRows = filtered.map((r) => [r.nomor_urut, r.instansi, r.kabupaten, r.materi, formatTanggal(r.created_at), r.status])
     const csv = [header, ...csvRows].map((row) => row.map((c) => `"${String(c ?? '').replace(/"/g, '""')}"`).join(',')).join('\n')
     const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' })
     const url = URL.createObjectURL(blob)
@@ -149,7 +150,7 @@ export default function AdminLaporan() {
                   <td className="py-2.5 border-b border-[#e3e8f0]">{r.instansi}</td>
                   <td className="py-2.5 border-b border-[#e3e8f0]">{r.kabupaten}</td>
                   <td className="py-2.5 border-b border-[#e3e8f0]">{r.materi}</td>
-                  <td className="py-2.5 border-b border-[#e3e8f0]">{r.created_at}</td>
+                  <td className="py-2.5 border-b border-[#e3e8f0]">{formatTanggal(r.created_at)}</td>
                   <td className="py-2.5 border-b border-[#e3e8f0]">
                     <span className={`badge b-${r.status}`}>{r.status}</span>
                   </td>

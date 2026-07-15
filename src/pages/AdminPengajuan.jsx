@@ -1,11 +1,11 @@
 import { useEffect, useMemo, useState } from 'react'
 import { supabase, isSupabaseConfigured } from '../supabaseClient'
-import { dummyPengajuan } from '../data/dummy'
+import { formatTanggal } from '../utils/formatDate'
 
 const STATUS_LIST = ['pending', 'diproses', 'revisi', 'approved', 'rejected', 'selesai']
 
 export default function AdminPengajuan() {
-  const [rows, setRows] = useState(dummyPengajuan)
+  const [rows, setRows] = useState([])
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
   const [statusFilter, setStatusFilter] = useState('semua')
@@ -23,7 +23,7 @@ export default function AdminPengajuan() {
     const { data, error } = await supabase
       .from('pengajuan')
       .select(
-        'id, nomor_urut, status, created_at, tanggal_pilihan_1, instansi(nama, kabupaten), pengajuan_materi(materi(nama))'
+        'id, nomor_urut, status, created_at, tanggal_pilihan_1, instansi(nama, kabupaten, pic_nama, pic_hp), pengajuan_materi(materi(nama))'
       )
       .order('created_at', { ascending: false })
     if (error) console.error('[admin pengajuan]', error)
@@ -34,6 +34,8 @@ export default function AdminPengajuan() {
           nomor_urut: r.nomor_urut,
           instansi: r.instansi?.nama ?? '-',
           kabupaten: r.instansi?.kabupaten ?? '-',
+          pic_nama: r.instansi?.pic_nama ?? '-',
+          pic_hp: r.instansi?.pic_hp ?? '-',
           materi: (r.pengajuan_materi || []).map((m) => m.materi?.nama).join(', '),
           created_at: r.created_at,
           status: r.status,
@@ -45,18 +47,23 @@ export default function AdminPengajuan() {
   }
 
   useEffect(() => {
-  const id = setTimeout(() => {
-    loadData()
-  }, 0)
-
-  return () => clearTimeout(id)
-}, [])
+    let cancelled = false
+    async function run() {
+      if (cancelled) return
+      await loadData()
+    }
+    run()
+    return () => {
+      cancelled = true
+    }
+  }, [])
 
   const filteredRows = useMemo(() => {
     return rows.filter((r) => {
       const matchSearch =
         search.trim() === '' ||
         r.instansi.toLowerCase().includes(search.toLowerCase()) ||
+        r.pic_nama.toLowerCase().includes(search.toLowerCase()) ||
         String(r.nomor_urut).includes(search)
       const matchStatus = statusFilter === 'semua' || r.status === statusFilter
       return matchSearch && matchStatus
@@ -94,7 +101,7 @@ export default function AdminPengajuan() {
   }
 
   return (
-    <div className="flex-1 p-8 lg:p-10">
+    <div className="flex-1 p-5 md:p-8 lg:p-10">
       <div className="mb-6">
         <h1 className="text-[22px] text-navy-950 mb-1">Kelola Pengajuan</h1>
         <p className="text-sm text-[#5b6472]">Cari, filter, dan proses seluruh pengajuan kegiatan edukasi.</p>
@@ -103,11 +110,11 @@ export default function AdminPengajuan() {
       <div className="card mb-4">
         <div className="flex flex-wrap gap-3 items-end">
           <div className="flex-1 min-w-[220px]">
-            <label className="block text-[12.5px] font-semibold text-[#5b6472] mb-1.5">Cari instansi / nomor</label>
+            <label className="block text-[12.5px] font-semibold text-[#5b6472] mb-1.5">Cari instansi / PIC / nomor</label>
             <input
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              placeholder="cth. SMAN 2 atau 0012"
+              placeholder="cth. SMAN 2, Budi, atau 0012"
               className="w-full px-3 py-2.5 border border-[#e3e8f0] rounded-lg text-sm"
             />
           </div>
@@ -130,16 +137,18 @@ export default function AdminPengajuan() {
         </div>
       </div>
 
-      <div className="card">
+      <div className="card overflow-x-auto">
         {loading ? (
           <p className="text-sm text-[#5b6472]">Memuat data...</p>
         ) : (
-          <table className="w-full border-collapse text-[13.5px]">
+          <table className="w-full border-collapse text-[13.5px] min-w-[900px]">
             <thead>
               <tr className="text-left text-[#5b6472] text-xs uppercase tracking-wide">
                 <th className="py-2 border-b border-[#e3e8f0]">No.</th>
                 <th className="py-2 border-b border-[#e3e8f0]">Instansi</th>
                 <th className="py-2 border-b border-[#e3e8f0]">Kabupaten</th>
+                <th className="py-2 border-b border-[#e3e8f0]">PIC</th>
+                <th className="py-2 border-b border-[#e3e8f0]">No. HP PIC</th>
                 <th className="py-2 border-b border-[#e3e8f0]">Materi</th>
                 <th className="py-2 border-b border-[#e3e8f0]">Tanggal</th>
                 <th className="py-2 border-b border-[#e3e8f0]">Status</th>
@@ -149,7 +158,7 @@ export default function AdminPengajuan() {
             <tbody>
               {filteredRows.length === 0 && (
                 <tr>
-                  <td colSpan={7} className="py-6 text-center text-[#9aa5b1]">
+                  <td colSpan={9} className="py-6 text-center text-[#9aa5b1]">
                     Tidak ada pengajuan yang cocok dengan filter.
                   </td>
                 </tr>
@@ -190,8 +199,18 @@ function RowGroup({ r, isOpen, finalDate, setFinalDate, finalTime, setFinalTime,
         <td className="py-2.5 border-b border-[#e3e8f0]">#{r.nomor_urut}</td>
         <td className="py-2.5 border-b border-[#e3e8f0]">{r.instansi}</td>
         <td className="py-2.5 border-b border-[#e3e8f0]">{r.kabupaten}</td>
+        <td className="py-2.5 border-b border-[#e3e8f0]">{r.pic_nama}</td>
+        <td className="py-2.5 border-b border-[#e3e8f0]">
+          {r.pic_hp && r.pic_hp !== '-' ? (
+            <a href={`https://wa.me/${r.pic_hp.replace(/^0/, '62').replace(/\D/g, '')}`} target="_blank" rel="noopener noreferrer" className="text-[#1d5dad] font-medium">
+              {r.pic_hp}
+            </a>
+          ) : (
+            '-'
+          )}
+        </td>
         <td className="py-2.5 border-b border-[#e3e8f0]">{r.materi}</td>
-        <td className="py-2.5 border-b border-[#e3e8f0]">{r.created_at}</td>
+        <td className="py-2.5 border-b border-[#e3e8f0]">{formatTanggal(r.created_at)}</td>
         <td className="py-2.5 border-b border-[#e3e8f0]">
           <span className={`badge b-${r.status}`}>{r.status}</span>
         </td>
@@ -209,7 +228,7 @@ function RowGroup({ r, isOpen, finalDate, setFinalDate, finalTime, setFinalTime,
       </tr>
       {isOpen && (
         <tr>
-          <td colSpan={7} className="bg-[#f7f9fc] border-b border-[#e3e8f0] py-3 px-3">
+          <td colSpan={9} className="bg-[#f7f9fc] border-b border-[#e3e8f0] py-3 px-3">
             <div className="flex flex-wrap items-end gap-3">
               <div>
                 <label className="block text-[11.5px] font-semibold text-[#5b6472] mb-1">Tanggal Final</label>

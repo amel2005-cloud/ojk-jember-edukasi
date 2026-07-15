@@ -2,6 +2,8 @@ import { createClient } from '@supabase/supabase-js'
 
 const url = import.meta.env.VITE_SUPABASE_URL
 const anonKey = import.meta.env.VITE_SUPABASE_ANON_KEY
+console.log("URL:", url)
+console.log("ANON KEY:", anonKey)
 
 // Mode demo: kalau .env belum diisi, aplikasi tetap jalan pakai data dummy
 // (lihat src/data/dummy.js) supaya UI tetap bisa dicoba sebelum Supabase disambungkan.
