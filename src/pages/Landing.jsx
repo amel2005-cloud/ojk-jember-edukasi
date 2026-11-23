@@ -55,20 +55,20 @@ export default function Landing({ onEnterSystem }) {
       />
 
       <div className="relative z-10 p-6 md:p-8 flex items-center justify-between">
-  <Logo size={34} />
+        <Logo size={34} />
 
-  <a
-    href="http://localhost:5177/"
-    className="flex items-center gap-2 px-5 py-2.5 rounded-lg border border-white/30 bg-white/10 backdrop-blur-sm text-white hover:bg-white/20 transition-all duration-300"
-    style={{ fontFamily: "'Montserrat', sans-serif" }}
-  >
-    <span>⌂</span>
-    <span className="text-sm font-semibold">Home</span>
-  </a>
-</div>
+        <a
+          href="https://sigap-ojk.vercel.app"
+          className="flex items-center gap-2 px-5 py-2.5 rounded-lg border border-white/30 bg-white/10 backdrop-blur-sm text-white hover:bg-white/20 transition-all duration-300"
+          style={{ fontFamily: "'Montserrat', sans-serif" }}
+        >
+          <span>⌂</span>
+          <span className="text-sm font-semibold">Home</span>
+        </a>
+      </div>
 
       <div className="relative z-10 flex-1 flex items-center justify-center px-6 pb-16 md:pb-0 text-center">
-  <div className="max-w-2xl flex flex-col items-center">
+        <div className="max-w-2xl flex flex-col items-center">
           <h1
             className="text-white text-7xl md:text-8xl tracking-wide mb-3 drop-shadow-lg"
             style={{ fontFamily: "'Squada One', sans-serif" }}
