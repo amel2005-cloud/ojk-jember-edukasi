@@ -73,22 +73,20 @@ export default function Landing({ onEnterSystem }) {
             className="text-white text-7xl md:text-8xl tracking-wide mb-3 drop-shadow-lg"
             style={{ fontFamily: "'Squada One', sans-serif" }}
           >
-            JARI
+            VISIT OJK JEMBER
           </h1>
 
           <h2
             className="text-white font-bold text-xl md:text-2xl leading-snug mb-4"
             style={{ fontFamily: "'Montserrat', sans-serif" }}
           >
-            Jember Administrasi, Registrasi, dan Informasi Edukasi Keuangan
           </h2>
 
           <p
             className="text-white/90 text-sm md:text-base mb-8 max-w-md leading-relaxed"
             style={{ fontFamily: "'Montserrat', sans-serif" }}
           >
-            Platform layanan administrasi dan edukasi keuangan yang terpercaya,
-            transparan, dan mudah diakses.
+            Layanan informasi terintegrasi untuk memfasilitasi pengajuan, pengelolaan, dan pemantauan permohonan kunjungan ke OJK.
           </p>
 
           <button

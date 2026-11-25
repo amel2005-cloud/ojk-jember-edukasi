@@ -96,7 +96,7 @@ export default function Login({ onLogin, onShowPublic, onShowRegister }) {
         </button>
         <p className="text-xs text-[#5b6472] mt-4 text-center">
           {isSupabaseConfigured
-            ? 'Terhubung ke Supabase Auth.'
+            ? ''
             : 'Mode demo — belum tersambung Supabase.'}
         </p>
         <a
