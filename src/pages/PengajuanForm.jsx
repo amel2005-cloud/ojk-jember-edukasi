@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from 'react'
 import { supabase, isSupabaseConfigured } from '../supabaseClient'
 
@@ -17,6 +18,8 @@ const MAX_FILE_MB = 5
 export default function PengajuanForm() {
   const [instansi, setInstansi] = useState(null)
   const [loadingInstansi, setLoadingInstansi] = useState(true)
+  const [submitting, setSubmitting] = useState(false)
+
   const [form, setForm] = useState({
     tgl1: '',
     tgl2: '',
@@ -25,6 +28,7 @@ export default function PengajuanForm() {
     tema_kegiatan: '',
     materi: ['Pengelolaan Keuangan'],
   })
+
   const [fileError, setFileError] = useState('')
   const [status, setStatus] = useState(null)
 
@@ -34,21 +38,28 @@ export default function PengajuanForm() {
         setLoadingInstansi(false)
         return
       }
+
       const { data: userData } = await supabase.auth.getUser()
       const userId = userData?.user?.id
+
       if (!userId) {
         setLoadingInstansi(false)
         return
       }
+
       const { data: profile, error: profileErr } = await supabase
         .from('profiles')
         .select('instansi_id, instansi(id, nama, jenis, pic_nama, pic_hp)')
         .eq('id', userId)
         .single()
+
       if (profileErr) console.error('[profile untuk form]', profileErr)
+
       if (profile?.instansi) setInstansi(profile.instansi)
+
       setLoadingInstansi(false)
     }
+
     loadInstansi()
   }, [])
 
@@ -64,6 +75,7 @@ export default function PengajuanForm() {
   function handleFileChange(e) {
     const file = e.target.files?.[0]
     setFileError('')
+
     if (file && file.size > MAX_FILE_MB * 1024 * 1024) {
       setFileError(
         `Ukuran file maksimal ${MAX_FILE_MB} MB. File kamu ${(file.size / 1024 / 1024).toFixed(1)} MB.`
@@ -73,66 +85,76 @@ export default function PengajuanForm() {
   }
 
   async function submit() {
+    if (submitting) return
+
+    setStatus(null)
+
     if (!isSupabaseConfigured) {
       setStatus('demo')
       return
     }
+
     if (!instansi?.id) {
       setStatus('no-instansi')
       return
     }
 
-    const { data: pengajuanBaru, error } = await supabase
-      .from('pengajuan')
-      .insert({
-        instansi_id: instansi.id,
-        tanggal_pilihan_1: form.tgl1 || null,
-        tanggal_pilihan_2: form.tgl2 || null,
-        jumlah_peserta: Number(form.jumlah_peserta) || null,
-        lokasi_kegiatan: form.lokasi || null,
-        tema_kegiatan: form.tema_kegiatan || null,
-        status: 'pending',
-      })
-      .select()
-      .single()
+    setSubmitting(true)
 
-    if (error) {
-      console.error('[submit pengajuan]', error)
-      setStatus('error')
-      return
-    }
+    try {
+      const { data: pengajuanBaru, error } = await supabase
+        .from('pengajuan')
+        .insert({
+          instansi_id: instansi.id,
+          tanggal_pilihan_1: form.tgl1 || null,
+          tanggal_pilihan_2: form.tgl2 || null,
+          jumlah_peserta: Number(form.jumlah_peserta) || null,
+          lokasi_kegiatan: form.lokasi || null,
+          tema_kegiatan: form.tema_kegiatan || null,
+          status: 'pending',
+        })
+        .select()
+        .single()
 
-    // Simpan materi yang DICENTANG SAJA (filter pakai .in), bukan semua materi di database
-    if (form.materi.length > 0) {
-      const { data: materiRows, error: materiErr } = await supabase
-        .from('materi')
-        .select('id, nama')
-        .in('nama', form.materi)
+      if (error) {
+        console.error('[submit pengajuan]', error)
+        setStatus('error')
+        return
+      }
 
-      if (materiErr) {
-        console.error('[materi]', materiErr)
-        alert('Gagal mengambil daftar materi: ' + materiErr.message)
-      } else if (!materiRows || materiRows.length === 0) {
-        console.warn(
-          'Tidak ada materi yang cocok ditemukan di database untuk:',
-          form.materi
-        )
-      } else {
-        const relasi = materiRows.map((m) => ({
-          pengajuan_id: pengajuanBaru.id,
-          materi_id: m.id,
-        }))
-        const { error: relasiErr } = await supabase
-          .from('pengajuan_materi')
-          .insert(relasi)
-        if (relasiErr) {
-          console.error('[pengajuan_materi]', relasiErr)
-          alert('Materi gagal disimpan: ' + relasiErr.message)
+      if (form.materi.length > 0) {
+        const { data: materiRows, error: materiErr } = await supabase
+          .from('materi')
+          .select('id, nama')
+          .in('nama', form.materi)
+
+        if (materiErr) {
+          console.error('[materi]', materiErr)
+          alert('Gagal mengambil daftar materi: ' + materiErr.message)
+        } else if (materiRows?.length > 0) {
+          const relasi = materiRows.map((m) => ({
+            pengajuan_id: pengajuanBaru.id,
+            materi_id: m.id,
+          }))
+
+          const { error: relasiErr } = await supabase
+            .from('pengajuan_materi')
+            .insert(relasi)
+
+          if (relasiErr) {
+            console.error('[pengajuan_materi]', relasiErr)
+            alert('Materi gagal disimpan: ' + relasiErr.message)
+          }
         }
       }
-    }
 
-    setStatus('ok')
+      setStatus('ok')
+    } catch (err) {
+      console.error('[submit pengajuan]', err)
+      setStatus('error')
+    } finally {
+      setSubmitting(false)
+    }
   }
 
   return (
@@ -180,12 +202,14 @@ export default function PengajuanForm() {
               value={form.tgl1}
               onChange={(v) => setForm({ ...form, tgl1: v })}
             />
+
             <Field
               label="Alternatif Tanggal 2"
               type="date"
               value={form.tgl2}
               onChange={(v) => setForm({ ...form, tgl2: v })}
             />
+
             <Field
               label="Jumlah Peserta"
               type="number"
@@ -193,12 +217,14 @@ export default function PengajuanForm() {
               onChange={(v) => setForm({ ...form, jumlah_peserta: v })}
               placeholder="cth. 60"
             />
+
             <Field
               label="Lokasi Kegiatan"
               value={form.lokasi}
               onChange={(v) => setForm({ ...form, lokasi: v })}
               placeholder="cth. Aula SMAN 2 Jember"
             />
+
             <div className="md:col-span-2">
               <Field
                 label="Tema Kegiatan"
@@ -207,10 +233,12 @@ export default function PengajuanForm() {
                 placeholder="cth. Perlindungan Konsumen Sektor Jasa Keuangan"
               />
             </div>
+
             <div className="md:col-span-2">
               <label className="block text-[12.5px] font-semibold text-[#5b6472] mb-1.5">
                 Materi Edukasi (boleh pilih lebih dari satu)
               </label>
+
               <div className="grid grid-cols-2 md:grid-cols-3 gap-2 mt-1">
                 {MATERI_LIST.map((m) => (
                   <label
@@ -227,47 +255,106 @@ export default function PengajuanForm() {
                 ))}
               </div>
             </div>
+
             <div className="md:col-span-2">
               <label className="block text-[12.5px] font-semibold text-[#5b6472] mb-1.5">
                 Surat Permohonan (PDF, maks. {MAX_FILE_MB} MB)
               </label>
+
               <input
                 type="file"
                 accept="application/pdf"
                 className="text-sm"
                 onChange={handleFileChange}
               />
+
               {fileError && (
                 <p className="text-xs text-red-600 mt-1.5">{fileError}</p>
               )}
             </div>
           </div>
+
           <button
+            type="button"
             onClick={submit}
-            className="mt-4 px-5 py-3 rounded-lg bg-navy-900 hover:bg-navy-700 text-white font-bold text-sm"
+            disabled={submitting}
+            className="mt-4 px-5 py-3 rounded-lg bg-navy-900 hover:bg-navy-700 text-white font-bold text-sm disabled:opacity-50"
           >
-            Kirim Pengajuan
+            {submitting ? 'Mengirim...' : 'Kirim Pengajuan'}
           </button>
-          {status === 'ok' && (
-            <p className="text-sm text-green-700 mt-3">
-              Pengajuan berhasil dikirim.
-            </p>
-          )}
+
           {status === 'error' && (
             <p className="text-sm text-red-600 mt-3">
               Gagal mengirim, coba lagi.
             </p>
           )}
+
           {status === 'no-instansi' && (
             <p className="text-sm text-red-600 mt-3">
               Instansi belum tertaut ke akun ini.
             </p>
           )}
+
           {status === 'demo' && (
             <p className="text-sm text-[#5b6472] mt-3">
               Mode demo — isi .env.local untuk mengirim ke Supabase sungguhan.
             </p>
           )}
+        </div>
+      )}
+
+      {/* POPUP PENGAJUAN BERHASIL */}
+      {status === 'ok' && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+          <div className="w-full max-w-md rounded-2xl bg-white p-8 text-center shadow-2xl">
+            <div className="mx-auto mb-5 flex h-20 w-20 items-center justify-center rounded-full bg-green-100">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                className="h-10 w-10 text-green-600"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                strokeWidth={2.5}
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M5 13l4 4L19 7"
+                />
+              </svg>
+            </div>
+
+            <h2 className="mb-3 text-2xl font-bold text-[#183D30]">
+              Pengajuan Berhasil Dikirim!
+            </h2>
+
+            <p className="mb-6 text-sm leading-7 text-[#5b6472]">
+              Permintaan kunjungan Anda telah berhasil kami terima.
+              Tim OJK Jember akan meninjau pengajuan Anda.
+            </p>
+
+            <div className="mb-6 rounded-xl bg-[#f7f9fc] p-4 text-left">
+              <p className="mb-1 text-sm font-semibold text-navy-950">
+                Selanjutnya, bagaimana?
+              </p>
+              <p className="text-xs leading-6 text-[#5b6472]">
+                Silakan pantau perkembangan status pengajuan melalui
+                menu Riwayat Pengajuan.
+              </p>
+            </div>
+
+            <p className="mb-6 text-xs text-[#8a8d91]">
+              Terima kasih telah menghubungi OJK Jember.
+            </p>
+
+            <button
+              type="button"
+              onClick={() => setStatus(null)}
+              className="w-full rounded-lg bg-[#5c0f18] px-5 py-3 text-sm font-bold text-white transition hover:bg-[#7a1724]"
+            >
+              Tutup
+            </button>
+          </div>
         </div>
       )}
     </div>
