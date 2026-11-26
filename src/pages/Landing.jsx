@@ -8,22 +8,21 @@ export default function Landing({ onEnterSystem }) {
         backgroundImage: "url('/images/login-bg.jpg')",
       }}
     >
-      {/* Overlay vintage golden */}
-      <div
-        className="absolute inset-0 pointer-events-none z-[1]"
-        style={{
-          background: `
-            linear-gradient(
-              100deg,
-              rgba(30, 20, 12, 0.82) 0%,
-              rgba(91, 65, 35, 0.56) 43%,
-              rgba(166, 130, 76, 0.34) 72%,
-              rgba(194, 158, 99, 0.22) 100%
-            )
-          `,
-        }}
-      />
-
+      {/* Overlay vintage dark cinematic */}
+<div
+  className="absolute inset-0 pointer-events-none z-[1]"
+  style={{
+    background: `
+      linear-gradient(
+        100deg,
+        rgba(20, 14, 10, 0.86) 0%,
+rgba(30, 21, 14, 0.74) 43%,
+rgba(45, 32, 21, 0.58) 72%,
+rgba(60, 43, 28, 0.48) 100%
+      )
+    `,
+  }}
+/>
       {/* Warm golden tint */}
       <div
         className="absolute inset-0 pointer-events-none z-[2]"

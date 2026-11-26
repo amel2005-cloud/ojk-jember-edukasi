@@ -34,6 +34,28 @@ export default function MateriUnduhan({ isAdmin }) {
 
     fetchData()
   }, [])
+  useEffect(() => {
+  if (!isSupabaseConfigured) return
+
+  const channel = supabase
+    .channel('materi-unduhan-realtime')
+    .on(
+      'postgres_changes',
+      {
+        event: '*',
+        schema: 'public',
+        table: 'materi_unduhan',
+      },
+      () => {
+        load()
+      }
+    )
+    .subscribe()
+
+  return () => {
+    supabase.removeChannel(channel)
+  }
+}, [])
   function handleFileChange(e) {
     const f = e.target.files?.[0]
     setError('')

@@ -166,10 +166,7 @@ export default function App() {
           <MobileTopbar onOpenMenu={() => setSidebarOpen(true)} />
 
           {pengajuPage === 'form' && <PengajuanForm />}
-          {pengajuPage === 'riwayat' && <Riwayat />}
-          {pengajuPage === 'materi-edukasi' && (
-            <MateriUnduhan isAdmin={false} />
-          )}
+{pengajuPage === 'riwayat' && <Riwayat />}
         </div>
       </div>
     )

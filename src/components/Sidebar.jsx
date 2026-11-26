@@ -29,11 +29,10 @@ export default function Sidebar({
   ]
 
   const menuPengaju = [
-    { key: 'form', label: 'Ajukan Kegiatan', icon: ClipboardList },
-    { key: 'riwayat', label: 'Riwayat Pengajuan', icon: FolderOpen },
-    { key: 'materi-edukasi', label: 'Materi Edukasi', icon: BookOpen },
-    { key: 'public', label: 'Kalender Publik', icon: CalendarDays },
-  ]
+  { key: 'form', label: 'Ajukan Kegiatan', icon: ClipboardList },
+  { key: 'riwayat', label: 'Riwayat Pengajuan', icon: FolderOpen },
+  { key: 'public', label: 'Kalender Publik', icon: CalendarDays },
+]
 
   const items = role === 'admin' ? menuAdmin : menuPengaju
 

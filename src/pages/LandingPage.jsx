@@ -54,8 +54,11 @@ export default function LandingPage() {
       `}</style>
 
       {/* Background: video + fallback poster */}
-      <div className="absolute inset-0">
-        <img src={media.poster} alt="" className="h-full w-full object-cover" />
+      <img
+  src={media.poster}
+  alt=""
+  className="h-full w-full object-cover brightness-[0.20]"
+/>
         {!videoFailed && (
           <video
             ref={videoRef}
@@ -70,9 +73,32 @@ export default function LandingPage() {
             onError={() => setVideoFailed(true)}
           />
         )}
-        {/* Overlay tipis: lebih gelap di kiri (area teks) dan di atas (navbar) */}
-        <div className="absolute inset-0 bg-gradient-to-r from-black/65 via-black/30 to-black/5" />
-        <div className="absolute inset-x-0 top-0 h-32 bg-gradient-to-b from-black/50 to-transparent" />
+        <div
+  className="absolute inset-0"
+  style={{ backgroundColor: "black", opacity: 0.95, zIndex: 9999 }}
+></div>
+        {/* Overlay hitam merata */}
+<div
+  className="absolute inset-0 z-[2]"
+  style={{ backgroundColor: "rgba(0, 0, 0, 0.98)" }}
+/>
+
+{/* Gradient tambahan */}
+<div
+  className="absolute inset-0 z-[3]"
+  style={{
+    background:
+      "linear-gradient(90deg, rgba(0,0,0,0.35) 0%, rgba(0,0,0,0.20) 50%, rgba(0,0,0,0.10) 100%)",
+  }}
+/>
+
+{/* Shadow bagian atas */}
+<div
+  className="absolute inset-x-0 top-0 z-[4] h-32"
+  style={{
+    background: "linear-gradient(180deg, rgba(0,0,0,0.50) 0%, transparent 100%)",
+  }}
+/>
       </div>
 
       {/* Navbar */}
